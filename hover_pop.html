@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Demo</title>
+<style>
+
+.clearfix {
+	zoom: 1;
+}
+.clearfix:after {
+	clear: both;
+	display: block;
+	height: 0;
+	content: '';
+	visibility: hidden;
+}
+em {
+	color: red;
+	font-style: normal;
+}
+
+.wrap {
+	position: relative;
+	margin: 100px auto;
+	width: 400px;
+	font-size: 12px;
+}
+.wrap ul {
+	list-style-type: none;
+	padding: 0;
+	text-align: center;
+	line-height: 100px;
+}
+.wrap li {
+	float: left;
+	margin-right: 20px;
+	margin-bottom: 20px;
+}
+.wrap li a {
+	display: block;
+	width: 100px;
+	height: 100px;
+	background-color: #ccc;
+	text-decoration: none;
+}
+
+.pop {
+	position: absolute;
+	left: 0;
+	top: 0;
+	box-sizing: border-box;
+	padding: 10px;
+	width: 100px;
+	border: 1px solid red;
+	background-color: #dec3f5;
+	display: none;
+	-webkit-transition: all .5s ease-in-out;
+	    -ms-transition: all .5s ease-in-out;
+	        transition: all .5s ease-in-out;
+}
+.pop .tri,
+.pop .tri i {
+	position: absolute;
+	top: 4px;
+	left: -10px;
+	width: 0;
+	height: 0;
+	border-style: solid;
+	border-width: 8px 10px 8px 0;
+	border-color: transparent red transparent transparent;
+}
+.pop .tri i {
+	top: -8px;
+	left: 2px;
+	border-right-color: #dec3f5;
+}
+</style>
+</head>
+<body>
+
+	<pre>
+说明：
+1. hover 弹出悬浮框
+2. 悬浮框跟随移动：延迟消失 + transition (IE10+)
+3. 快速滑入时不出弹框：延迟显示
+	</pre>
+
+	<div class="wrap">
+		<ul class="clearfix">
+			<li><a href="#">鼠</a></li>
+			<li><a href="#">牛</a></li>
+			<li><a href="#">虎</a></li>
+			<li><a href="#">兔</a></li>
+			<li><a href="#">龙</a></li>
+			<li><a href="#">蛇</a></li>
+			<li><a href="#">马</a></li>
+			<li><a href="#">羊</a></li>
+			<li><a href="#">猴</a></li>
+			<li><a href="#">鸡</a></li>
+			<li><a href="#">狗</a></li>
+			<li><a href="#">猪</a></li>
+		</ul>
+		<div class="pop js-pop">
+			<div class="tri"><i></i></div>
+			移入区域：<span class="js-target"></span>
+		</div>
+	</div>
+
+	<pre>
+知识点：
+1. <em>位置</em>：position() offset()
+2. 事件函数 <em>hover()</em>：mouseenter mouseleave
+3. <em>鼠标事件</em>的顺序&冒泡：mouseenter mousein mouseout mouseover + 鼠标按下 抬起 单击 双击
+4. 计时器：<em>setTimeout() clearTimeout()</em>，clear + 作用域
+	</pre>
+
+	<script src="http://s0.qhimg.com/lib/jquery/183.js"></script>
+	<script>
+		$(document).ready(function(){
+
+			var wrap = $('.wrap');
+			var pop = $('.js-pop'),
+				popInfo = pop.find('.js-target');
+
+			//延迟 
+			var timer_hidden = null,
+				timer_show = null;
+
+			function clearTimers(){
+				timer_hidden && clearTimeout(timer_hidden);
+				timer_show && clearTimeout(timer_show);
+			}
+			function showPop(me){
+				// me.offset() me.position()
+				var pos = me.position(),
+					left = pos.left,
+					top = pos.top;
+				
+				//console.log('left: ', left, ' top:', top);
+				popInfo.text(me.text());
+				pop.css('left', (left+110)+'px').css('top', (top+20)+'px').show();
+			}
+			function hidePop(delay){
+				clearTimers();
+				timer_hidden = setTimeout(function(){
+					pop.hide();
+				}, delay|0);
+			}
+
+			wrap.find('li').hover(function(e){
+				// console.log('item: mouseenter');
+				var me = $(this);
+				clearTimers();
+
+				//当要setTime传参时，不能me传参（那时候形参而已）不能带括号（直接执行了就），只能通过闭包来
+				timer_show = setTimeout(function(){
+					showPop(me);
+				}, 200);
+			}, function(e){
+				// console.log('item: mouseleave');
+				// hidePop(2000);
+			});
+
+			wrap.hover(function(e){
+				// console.log('wrap: mouseenter');
+			}, function(e){
+				// console.log('wrap: mouseleave');
+				// 移出整个区域后，弹框再消失
+				hidePop(500);
+			});
+		});
+	</script>
+</body>
+</html>
