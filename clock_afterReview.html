@@ -16,11 +16,22 @@
 	 （1）去掉了繁琐的 var me = this;
 	 （2）合并循环：画线和数字时
 	 （3）简化计算公式：画数字时
-	 
-	 
-	 
-	 
-	
+	3. 其他：
+         （1）trim()
+         （2）switch-case  vs. if-else
+         （3）htmlArray.length vs. $.isEmptyObject(x)
+         （4）this.
+         （5）setInterval() 传参this过去-作用域上下文
+
+
+       还遗留以下问题未修改：
+       1. 浏览器的兼容性
+       2. 用 jQuery 提供的插件形式书写，并简化 HTML 结构和配置项
+        （1）<div class="clock"></div>，然后 $('.clock').Clock() 的用法
+        （2）配置项中牵扯到选择器的，可尽量自动生成
+       3. 时间的校验。
+        （1）当网页在后台打开，setInterval()
+        （2）当网页被关闭，比如手机锁屏等
 -->
 <!DOCTYPE html>
 <html lang="en">
