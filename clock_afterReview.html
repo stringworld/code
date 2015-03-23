@@ -1,0 +1,417 @@
+<!--
+	用途：录制视频时的效果的源码
+	预期：计划把效果提取成组件的形式，方便阅读、方便复用
+	说明：
+		未考虑浏览器的兼容性，请用支持CSS3的浏览器打开 ^o^
+	Review：
+		欢迎对看到的任何问题提意见，
+		也包括当前组件的封装形式（看如何组织更好些...此处经验太少）
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>CSS时钟</title>
+	<style type="text/css">
+		ul, ol {
+			padding: 0;
+			margin: 0;
+			list-style-type: none;
+		}
+
+
+		/*表盘*/
+		.clock {
+			position: relative;
+			width: 300px;
+			height: 300px;
+			border: 20px solid #333;
+			border-radius: 50%;
+			background-color: #292a38;
+		}
+
+		/*刻度*/
+		.clock .line {
+			position: absolute;
+			left: 50%;
+			top: 50%;
+			background-color: #fff;
+		}
+		.line-minute .line {
+			width: 5px;
+			height: 1px;
+		}
+		.line-hour .line {
+			width: 10px;
+			height: 2px;
+		}
+		.line-main .line {
+			width: 15px;
+			height: 4px;
+		}
+
+		/*数字*/
+		.clock .number {
+			position: absolute;
+			height: 230px;
+			width: 230px;
+			left: 50%;
+			top: 50%;
+			transform: translate(-50%, -50%);
+			font-family: 'Microsoft Yahei';
+			font-size: 30px;
+			color: #fff;
+		}
+		.number .num {
+			position: absolute;
+			transform: translate(-50%, -50%);
+		}
+
+		/*指针*/
+		.clock .pointer {
+			position: absolute;
+			left: 50%;
+			top: 50%;
+		}
+		.pointer .hour,
+		.pointer .minute,
+		.pointer .second,
+		.pointer .circle {
+			position: absolute;
+			left: 0;
+			top: 0;
+			background-color: #fff;
+			transform-origin: 0 50%;
+		}
+		.pointer .circle {
+			width: 0;
+			height: 0;
+			border: 6px solid #fff;
+			border-radius: 50%;
+			transform: translate(-50%, -50%);
+		}
+		.pointer .hour {
+			top: -2px;   /*值=-1*height/2 */
+			width: 60px;
+			height: 4px;
+		}
+		.pointer .minute {
+			top: -1px;   /*值=-1*height/2 */
+			width: 80px;
+			height: 2px;
+		}
+		.pointer .second {
+			width: 100px;
+			height: 1px;
+		}
+
+
+		/*------- 自定义样式 ------*/
+		#demo2 {
+			width: 250px;
+			height: 250px;
+		}
+		#demo2 .pointer .circle {
+			border-width: 16px;
+		}
+		#demo2 .pointer .hour {
+			top: -8px;   /*height/2*/
+			height: 16px;
+		}
+		#demo2 .pointer .minute {
+			top: -5px;   /*height/2*/
+			height: 10px;
+		}
+		#demo2 .pointer .second {
+			top: -3px;   /*height/2*/
+			height: 6px;
+		}
+		#demo2 .pointer .hour,
+		#demo2 .pointer .minute,
+		#demo2 .pointer .second {
+			border: 2px solid #fff;
+			border-radius: 10px;
+		}
+
+		#demo3 {
+			border-color: #f3bcbc;
+			background-color: #fff;
+		}
+		#demo3 .line,
+		#demo3 .pointer span {
+			background-color: #000;
+		}
+		#demo3 .number .num {
+			color: #000;
+		}
+		#demo3 .circle {
+			border-color: #000;
+		}
+	</style>
+</head>
+<body>
+	<div class="clock" id="demo">
+		<ul class="line-minute"></ul>
+		<ul class="line-hour"></ul>
+		<ul class="line-main"></ul>
+		<ol class="number"></ol>
+		<div class="pointer">
+			<span class="hour"></span>
+			<span class="minute"></span>
+			<span class="second"></span>
+			<span class="circle"></span>
+		</div>
+	</div>
+
+	<div class="clock" id="demo1">
+		<ul class="line-minute"></ul>
+		<ul class="line-hour"></ul>
+		<ul class="line-main"></ul>
+		<ol class="number"></ol>
+		<div class="pointer">
+			<span class="hour"></span>
+			<span class="minute"></span>
+			<span class="second"></span>
+			<span class="circle"></span>
+		</div>
+	</div>
+
+	<div class="clock" id="demo2">
+		<ul class="line-minute"></ul>
+		<ul class="line-hour"></ul>
+		<ul class="line-main"></ul>
+		<ol class="number"></ol>
+		<div class="pointer">
+			<span class="hour"></span>
+			<span class="minute"></span>
+			<span class="second"></span>
+			<span class="circle"></span>
+		</div>
+	</div>
+
+	<div class="clock" id="demo3">
+		<ul class="line-minute"></ul>
+		<ul class="line-hour"></ul>
+		<ul class="line-main"></ul>
+		<ol class="number"></ol>
+		<div class="pointer">
+			<span class="hour"></span>
+			<span class="minute"></span>
+			<span class="second"></span>
+			<span class="circle"></span>
+		</div>
+	</div>
+
+</body>
+<script src="http://s0.qhimg.com/lib/jquery/183.js" ></script>
+<script type="text/javascript">
+
+$(document).ready(function(){
+
+
+	(function($){
+
+		function Clock(conf){
+
+			// 默认配置
+			this.config = {
+				root: '.clock',		// 表盘元素
+
+				number: 'all',			// string, 标识数字的类型，三种值'main'|'all'|''，含义分别是只显示3-6-9-12|显示1-12|不显示数字
+				line: 'hour,minute',	// string, 标识刻度的类型，其值是'main','hour','minute'三个任意的组合 以逗号,分隔。其中 'main'显示3-6-9-12这4个主刻度线，'hour'显示12个小时的刻度线，'minute'显示60个分钟刻度线
+
+				selectors: {
+					pointerHour: '.pointer .hour',		// 时针
+					pointerMinute: '.pointer .minute',	// 分针
+					pointerSecond: '.pointer .second',	// 秒针
+					line_main: '.line-main',			// 主刻度线容器
+					line_hour: '.line-hour',			// 小时刻度线容器
+					line_minute: '.line-minute',		// 分钟刻度线容器
+					number: '.number'					// 数字容器
+				}
+			};
+
+			$.extend(true, this.config, conf||{});
+
+			// 表盘
+			this.panel = $(this.config.root||'body');
+
+			var panel = this.panel;
+				selectors = this.config.selectors;
+
+			// 时针、分针、秒针
+			this.pointerHour = $(selectors.pointerHour, panel);
+			this.pointerMinute = $(selectors.pointerMinute, panel);
+			this.pointerSecond = $(selectors.pointerSecond, panel);
+
+			this.timer = null;
+
+			// 变量缓存：时针转动时
+			this.exMinute = 0;		// 分钟
+			this.exAngleHour = 0;	// 时针角度
+		}
+		Clock.prototype = {
+			constructor: Clock,
+			init: function(){
+				var panel = this.panel,
+					config = this.config,
+					selectors = config.selectors;
+
+				// 显示刻度
+				var lines = config.line.split(',');
+				var me = this;
+				$.each(lines, function(i,line){
+					line = $.trim(line);
+					me._drawLine(line, $(selectors['line_'+line], panel));
+				});
+
+				// 显示数字
+				if(config.number){
+					this._drawNumber(config.number, $(selectors.number, panel));
+				}
+
+				// 显示指针
+				this._drawPointer();
+
+				// 表走动
+				this.run();
+
+				return this;
+			},
+			run: function(){
+				this.stop();
+
+				var me = this;
+				this.timer = setInterval(function(){
+					me._setTimeNow(me);
+				}, 1000);
+
+				return this;
+			},
+			stop: function(){
+				clearInterval(this.timer);
+				return this;
+			},
+			_drawLine: function(type, wrap){
+				var total, lineWidth;
+				switch(type){
+					case 'main':
+						total = 4;
+						lineWidth = 15;
+						break;
+					case 'hour':
+						total = 12;
+						lineWidth = 10;
+						break;
+					case 'minute':
+						total = 60;
+						lineWidth = 5;
+						break;
+				}
+
+				if(total){
+					var gap = 360/total;
+					var radius = Math.ceil(this.panel.width()/2), // 表盘的宽度
+						padding = 5,                              // 刻度相对于表盘的间距 5px
+						translateX = radius-lineWidth-padding;
+
+					var strHtml = '';
+					for(var i=0; i<total; i++){
+						var myAngle = gap*i;
+						strHtml += '<li class="line" style="transform:rotateZ(' + myAngle + 'deg) translate('+ translateX +'px, -50%); transform-origin:left center"></li>';
+					}
+					wrap.html(strHtml);
+				}
+			},
+			_drawNumber: function(type, wrap){
+				var numbers = [];
+				if(type=='main'){
+					numbers = [3,6,9,12];
+				}else if(type=='all'){
+					numbers = [1,2,3,4,5,6,7,8,9,10,11,12];
+				}
+
+				var radius = wrap.width()/2;
+				var strHtml = '';
+				$.each(numbers, function(i,e){
+					var myAngle = (e-3)/6 * Math.PI;
+					var myX = radius + radius*Math.cos(myAngle),
+						myY = radius + radius*Math.sin(myAngle);
+						strHtml += '<li class="num" style="left:' + myX + 'px; top:' + myY + 'px;">' + e + '</li>';
+				});
+				wrap.html(strHtml);
+			},
+			_drawPointer: function(){
+				this._setTimeNow(this, 'init');
+			},
+			_setTimeNow: function(me, type){
+				var now = new Date(),
+					hour = now.getHours(),
+					minute = now.getMinutes(),
+					second = now.getSeconds();
+
+				// 秒针、分针
+				var angleSecond = second*6,
+					angleMinute = minute*6 + second*0.1;
+				me.pointerSecond.css('transform', 'rotateZ(' + (angleSecond-90) + 'deg)');
+				me.pointerMinute.css('transform', 'rotateZ(' + (angleMinute-90) + 'deg)');
+
+				if(type=='init'){
+					me.exMinute = minute;
+					me.exAngleHour = (hour%12)*30 + minute*0.5;
+				}
+
+				// 时针：一分钟转一次 || 初始化时
+				if(minute!=me.exMinute || type=='init'){
+					me.exAngleHour = me.exAngleHour + 0.5;
+					me.pointerHour.css('transform', 'rotateZ(' + (me.exAngleHour-90) + 'deg)');
+
+					me.exMinute = minute;
+					if(me.exMinute==0){
+						me.exAngleHour = (hour%12)*30;
+					}
+				}
+			}
+		};
+
+
+		if( !$.MoheUI ){
+			$.MoheUI = {};
+		}
+		$.MoheUI.Clock = function(config){
+			return (new Clock(config)).init();
+		};
+
+	})(jQuery);
+
+
+	var config = {
+		root: '#demo',
+		number: 'all',		// main|all|''
+		line: 'hour,minute'	// 'main,hour,minute'
+	};
+	var clock = $.MoheUI.Clock(config);
+
+
+	$.MoheUI.Clock({
+		root: '#demo1',
+		number: 'main',
+		line: 'hour'
+	});
+
+	$.MoheUI.Clock({
+		root: '#demo2',
+		number: '',
+		line: 'main'
+	});
+
+	$.MoheUI.Clock({
+		root: '#demo3',
+		number: 'main',
+		line: 'hour'
+	});
+
+});
+
+</script>
+</html>
