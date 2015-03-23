@@ -1,0 +1,446 @@
+<!--
+	用途：录制视频时的效果的源码
+	预期：计划把效果提取成组件的形式，方便阅读、方便复用
+	说明：
+		未考虑浏览器的兼容性，请用支持CSS3的浏览器打开 ^o^
+	Review：
+		欢迎对看到的任何问题提意见，
+		也包括当前组件的封装形式（看如何组织更好些...此处经验太少）
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>CSS时钟</title>
+	<style type="text/css">
+
+		/*表盘*/
+		.clock {
+			position: relative;
+			width: 300px;
+			height: 300px;
+			border: 20px solid #333;
+			border-radius: 50%;
+			background-color: #292a38;
+		}
+
+		/*刻度*/
+		.line a {
+			position: absolute;
+			left: 50%;
+			top: 50%;
+			background-color: #fff;
+		}
+		.line-minute a {
+			width: 5px;
+			height: 1px;
+		}
+		.line-hour a {
+			width: 10px;
+			height: 2px;
+		}
+		.line-main a {
+			width: 15px;
+			height: 4px;
+		}
+
+		/*数字*/
+		.clock .digits {
+			position: absolute;
+			height: 230px;
+			width: 230px;
+			left: 50%;
+			top: 50%;
+			transform: translate(-50%, -50%);
+			font-family: 'Microsoft Yahei';
+			font-size: 30px;
+			color: #fff;
+		}
+		.digits a {
+			position: absolute;
+			transform: translate(-50%, -50%);
+		}
+
+		/*指针*/
+		.clock .needle {
+			position: absolute;
+			left: 50%;
+			top: 50%;
+		}
+		.needle a {
+			position: absolute;
+			left: 0;
+			top: 0;
+			background-color: #fff;
+			transform-origin: 0 50%;
+		}
+		.needle a.circle {
+			width: 0;
+			height: 0;
+			border: 6px solid #fff;
+			border-radius: 50%;
+			transform: translate(-50%, -50%);
+		}
+		.needle a.hour {
+			top: -2px;   /*值=-1*height/2 */
+			width: 60px;
+			height: 4px;
+		}
+		.needle a.minute {
+			top: -1px;   /*值=-1*height/2 */
+			width: 80px;
+			height: 2px;
+		}
+		.needle a.second {
+			width: 100px;
+			height: 1px;
+		}
+
+
+		/*------- 自定义样式 ------*/
+		#demo2 {
+			width: 250px;
+			height: 250px;
+		}
+		#demo2 .needle .circle {
+			border-width: 16px;
+		}
+		#demo2 .needle .hour {
+			top: -8px;   /*height/2*/
+			height: 16px;
+		}
+		#demo2 .needle .minute {
+			top: -5px;   /*height/2*/
+			height: 10px;
+		}
+		#demo2 .needle .second {
+			top: -3px;   /*height/2*/
+			height: 6px;
+		}
+		#demo2 .needle .hour,
+		#demo2 .needle .minute,
+		#demo2 .needle .second {
+			border: 2px solid #fff;
+			border-radius: 10px;
+		}
+
+		#demo3 {
+			border-color: #f3bcbc;
+			background-color: #fff;
+		}
+		#demo3 .line a,
+		#demo3 .needle a {
+			background-color: #000;
+		}
+		#demo3 .digits a {
+			color: #000;
+		}
+		#demo3 a.circle {
+			border-color: #000;
+		}
+	</style>
+</head>
+<body>
+	<div class="clock" id="demo">
+		<div class="line">
+			<div class="line-minute"></div>
+			<div class="line-hour"></div>
+			<div class="line-main"></div>
+		</div>
+		<div class="digits"></div>
+		<div class="needle">
+			<a class="hour"></a>
+			<a class="minute"></a>
+			<a class="second"></a>
+			<a class="circle"></a>
+		</div>
+	</div>
+
+	<div class="clock" id="demo1">
+		<div class="line">
+			<div class="line-minute"></div>
+			<div class="line-hour"></div>
+			<div class="line-main"></div>
+		</div>
+		<div class="digits"></div>
+		<div class="needle">
+			<a class="hour"></a>
+			<a class="minute"></a>
+			<a class="second"></a>
+			<a class="circle"></a>
+		</div>
+	</div>
+
+	<div class="clock" id="demo2">
+		<div class="line">
+			<div class="line-minute"></div>
+			<div class="line-hour"></div>
+			<div class="line-main"></div>
+		</div>
+		<div class="digits"></div>
+		<div class="needle">
+			<a class="hour"></a>
+			<a class="minute"></a>
+			<a class="second"></a>
+			<a class="circle"></a>
+		</div>
+	</div>
+
+	<div class="clock" id="demo3">
+		<div class="line">
+			<div class="line-minute"></div>
+			<div class="line-hour"></div>
+			<div class="line-main"></div>
+		</div>
+		<div class="digits"></div>
+		<div class="needle">
+			<a class="hour"></a>
+			<a class="minute"></a>
+			<a class="second"></a>
+			<a class="circle"></a>
+		</div>
+	</div>
+</body>
+<script src="http://s0.qhimg.com/lib/jquery/183.js" ></script>
+<script type="text/javascript">
+
+$(document).ready(function(){
+
+
+	(function($){
+
+		function Clock(conf){
+
+			// 默认配置
+			this.config = {
+				root: '.clock',		// 表盘元素
+
+				digit: 'all',			// string, 标识数字的类型，三种值'main'|'all'|''，含义分别是只显示3-6-9-12|显示1-12|不显示数字
+				line: 'hour,minute',	// string, 标识刻度的类型，其值是'main','hour','minute'三个任意的组合 以逗号,分隔。其中 'main'显示3-6-9-12这4个主刻度线，'hour'显示12个小时的刻度线，'minute'显示60个分钟刻度线
+
+				selectors: {
+					needleHour: '.needle .hour',		// 时针
+					needleMinute: '.needle .minute',	// 分针
+					needleSecond: '.needle .second',	// 秒针
+					line_main: '.line-main',			// 主刻度线容器
+					line_hour: '.line-hour',			// 小时刻度线容器
+					line_minute: '.line-minute',		// 分钟刻度线容器
+					digits: '.digits'					// 数字容器
+				}
+			};
+
+			$.extend(true, this.config, conf||{});
+
+			// 表盘
+			this.panel = $(this.config.root||'body');
+
+			var panel = this.panel;
+				selectors = this.config.selectors;
+
+			// 时针、分针、秒针
+			this.needleHour = $(selectors.needleHour, panel);
+			this.needleMinute = $(selectors.needleMinute, panel);
+			this.needleSecond = $(selectors.needleSecond, panel);
+
+			this.timer = null;
+
+			// 变量缓存：时针转动时
+			this.exMinute = 0;		// 分钟
+			this.exAngleHour = 0;	// 时针角度
+		}
+		Clock.prototype = {
+			constructor: Clock,
+			init: function(){
+				var me = this;
+				var panel = me.panel,
+					config = me.config,
+					selectors = config.selectors;
+
+				// 显示刻度
+				var lines = config.line.split(',');
+				$.each(lines, function(i,line){
+					me._initLine(line, $(selectors['line_'+line], panel));
+				});
+
+				// 显示数字
+				if(config.digit){
+					me._initDigit(config.digit, $(selectors.digits, panel));
+				}
+
+				// 显示指针
+				me._initNeedle();
+
+				// 表走动
+				me.run();
+
+				return me;
+			},
+			run: function(){
+				var me = this;
+				me.stop();
+				me.timer = setInterval(function(){
+					me._setTimeNow(me);
+				}, 1000);
+				return me;
+			},
+			stop: function(){
+				var me = this;
+				clearInterval(me.timer);
+				return me;
+			},
+			_initLine: function(type, wrap){
+				var total;
+				switch(type){
+					case 'main':
+						total = 4;
+						break;
+					case 'hour':
+						total = 12;
+						break;
+					case 'minute':
+						total = 60;
+						break;
+				}
+
+				if(!total){
+					return;
+				}
+
+				var htmlArray = [];
+				for(var i=0; i<total; i++){
+					htmlArray.push('<a></a>');
+				}
+				wrap.html(htmlArray.join(''));
+
+				var lines = wrap.find('a');
+				var gap = 360/total;
+				var radius = Math.ceil(this.panel.width()/2), // 表盘的宽度
+					width = lines.width(),                    // 刻度的宽度
+					padding = 5;                              // 刻度相对于表盘的间距 5px
+					translateX = radius-width-padding;
+
+				$.each(lines, function(index,e){
+					var myAngle = gap*index;
+					$(this).css({
+						'transform': 'rotateZ(' + myAngle + 'deg) translate('+ translateX +'px, -50%)',
+						'transform-origin': 'left center'
+					});
+				});
+			},
+			_initDigit: function(type, wrap){
+				var digits = [],
+					start, end;
+
+				switch(type){
+					case 'main':
+						digits = [3,6,9,12];
+						start = 0;
+						end = 360;
+						break;
+					case 'all':
+						digits = [1,2,3,4,5,6,7,8,9,10,11,12];
+						start = -60;
+						end = 300;
+						break;
+				}
+
+				if($.isEmptyObject(digits)){
+					return;
+				}
+
+				var htmlArray = [];
+				$.each(digits, function(i,e){
+					htmlArray.push('<a>' + e + '</a>');
+				});
+				wrap.html(htmlArray.join(''));
+
+				var radius = wrap.width()/2,
+					gap = 360/digits.length,
+					radian = Math.PI/180;
+
+				$.each(wrap.find('a'), function(index,e){
+					var myAngle = (start+gap*index) * radian;
+
+					var myX = radius + radius*Math.cos(myAngle),
+						myY = radius + radius*Math.sin(myAngle);
+
+					$(this).css({
+						'left': myX + 'px',
+						'top': myY + 'px'
+					});
+				});
+			},
+			_initNeedle: function(){
+				var me = this;
+				me._setTimeNow(me, 'init');
+			},
+			_setTimeNow: function(me, type){
+				var now = new Date(),
+					hour = now.getHours(),
+					minute = now.getMinutes(),
+					second = now.getSeconds();
+
+				// 秒针、分针
+				var angleSecond = second*6,
+					angleMinute = minute*6 + second*0.1;
+				me.needleSecond.css('transform', 'rotateZ(' + (angleSecond-90) + 'deg)');
+				me.needleMinute.css('transform', 'rotateZ(' + (angleMinute-90) + 'deg)');
+
+				if(type=='init'){
+					me.exMinute = minute;
+					me.exAngleHour = (hour%12)*30 + minute*0.5;
+				}
+
+				// 时针：一分钟转一次 || 初始化时
+				if(minute!=me.exMinute || type=='init'){
+					me.exAngleHour = me.exAngleHour + 0.5;
+					me.needleHour.css('transform', 'rotateZ(' + (me.exAngleHour-90) + 'deg)');
+
+					me.exMinute = minute;
+					if(me.exMinute==0){
+						me.exAngleHour = (hour%12)*30;
+					}
+				}
+			}
+		};
+
+
+		if( !$.MoheUI ){
+			$.MoheUI = {};
+		}
+		$.MoheUI.Clock = function(config){
+			return (new Clock(config)).init();
+		};
+
+	})(jQuery);
+
+
+	var config = {
+		root: '#demo',
+		digit: 'all',		// main|all|''
+		line: 'hour,minute'	// 'main,hour,minute'
+	};
+	var clock = $.MoheUI.Clock(config);
+
+	$.MoheUI.Clock({
+		root: '#demo1',
+		digit: 'main',
+		line: 'hour'
+	});
+
+	$.MoheUI.Clock({
+		root: '#demo2',
+		digit: '',
+		line: 'main'
+	});
+
+	$.MoheUI.Clock({
+		root: '#demo3',
+		digit: 'main',
+		line: 'hour'
+	});
+
+});
+
+</script>
+</html>
